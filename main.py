@@ -117,10 +117,10 @@ def delete_produto(id):
         produto = mysql.session.query(Produtos).get(id)
         mysql.session.delete(produto)
         mysql.session.commit()
-        return jsonify({'Excluido com sucesso.'}), 204
+        return "", 204
     except Exception as e:
         print(f"Erro: {e}")
-        return "Erro ao excluir produto", 400
+        return "Produto não existe", 400
 
 # Rotas para CRUD de clientes (MySQL)
 
@@ -131,26 +131,71 @@ def get_clientes():
 
 ## Aqui definiremos as Rotas para Create, Update e Delete de clientes
 
+@app.route("/clientes", methods=["POST"])
+def set_cliente():
+    try:
+        dados = request.get_json()
+        cliente = Clientes(nome=dados["nome"],
+                            email=dados['email'],
+                            cpf=dados["cpf"],
+                            data_nascimento=dados["data_nascimento"])
+        mysql.session.add(cliente)
+        mysql.session.commit()
+        return jsonify(cliente.serialize()), 201
+    except Exception as e:
+        print(f"Erro: {e}")
+        return "Erro ao cadastrar Cliente.", 400
+
+@app.route("/clientes/<int:id>", methods=["PUT"])
+def update_cliente(id):
+    try:
+        dados = request.get_json()
+        cliente = mysql.session.query(Clientes).get(id)
+        cliente.nome = dados["nome"]
+        cliente.email = dados["email"]
+        cliente.cpf = dados["cpf"]
+        cliente.data_nascimento = dados["data_nascimento"]
+
+        mysql.session.commit()
+        return jsonify(cliente.serialize()), 201
+    except Exception as e:
+        print(f"Error: {e}")
+        return "Erro ao alterar os dados", 400
+    
+    
+@app.route("/clientes/<int:id>", methods=["DELETE"])
+def delete_cliente(id):
+    try:
+        cliente = mysql.session.query(Clientes).get(id)
+        mysql.session.delete(cliente)
+        mysql.session.commit()
+        return "", 204
+    except Exception as e:
+        print(f"Erro: {e}")
+        return "Cliente não existe", 400
+    
 
 
 # Rotas para CRUD de Pedidos
 # Rotas feitas para manipular os dados através do MongoDB
+
 
 @app.route("/pedidos", methods=["GET"])
 def get_pedidos():
     try:
         pedidos = pedidos_collection.find()
 
-        # Convertendo ObjectId em strings para serialização
-        pedidos_serializaveis = []
-        for pedido in pedidos:
-            pedido['_id'] = str(pedido['_id'])
-            pedidos_serializaveis.append(pedido)
+        lista_pedidos = [pedido for pedido in pedidos]
 
-        return jsonify(pedidos_serializaveis), 200
+        for pedido in lista_pedidos:
+            pedido["_id"] = str(pedido["_id"])
+
+        return jsonify(lista_pedidos), 200
+
     except Exception as e:
         print(f"Erro: {e}")
-        return "Erro ao listar pedidos.", 500
+        return f"Erro ao buscar pedidos: {e}", 500
+
 
 # Rotas para Create, Update e Delete de pedidos)
 @app.route("/pedidos", methods=["POST"])
