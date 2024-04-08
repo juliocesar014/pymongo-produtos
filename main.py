@@ -3,7 +3,7 @@ from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Integer, String, Float, Date
 
-from config import SQLALCHEMY_DATABASE_URI, mongodb, pedidos_collection
+from config import SQLALCHEMY_DATABASE_URI, pedidos_collection
 
 app = Flask(__name__)
 
@@ -13,7 +13,7 @@ mysql = SQLAlchemy(app)
 # Definindo as classes para Produtos, Clientes e Pedidos
 # Definindo seus modelos de produto e cliente (SQL)
 class Produtos(mysql.Model):
-    id_produto = mysql.Column(Integer, primary_key=True)
+    id_produtos = mysql.Column(Integer, primary_key=True)
     nome = mysql.Column(String)
     descricao = mysql.Column(String)
     preco = mysql.Column(Float)
@@ -21,7 +21,7 @@ class Produtos(mysql.Model):
 
     def serialize(self):
         return {
-            "id": self.id_produto,
+            "id": self.id_produtos,
             "nome": self.nome,
             "descricao": self.descricao,
             "preco": self.preco,
@@ -63,6 +63,10 @@ class Pedidos:
 
 # Rotas para CRUD de produtos (MySQL)
 
+@app.route("/", methods=["GET"])
+def health():
+    return jsonify({"status": "API Online"}), 200
+
 @app.route("/produtos", methods=["GET"])
 def get_produtos():
     # Criando objeto que recebe os dados
@@ -71,7 +75,7 @@ def get_produtos():
     return jsonify([produto.serialize() for produto in produtos])
 
 # Rotas para Create, Update e Delete de produtos)
-@app.route("/produtos/", methods=['POST'])
+@app.route("/produtos", methods=['POST'])
 def set_produto():
     try:
         # Obtendo e cadastrando dados na tabela PRODUTOS
@@ -87,7 +91,7 @@ def set_produto():
         print(f"Erro: {e}")
         return "Erro ao cadastrar Produto.", 400
 
-@app.route("/produto/<int:id>", methods=["PUT"])
+@app.route("/produtos/<int:id>", methods=["PUT"])
 def update_produto(id):
     try:
         # Retornando os dados em JSON para atualização
@@ -106,7 +110,7 @@ def update_produto(id):
         print(f"Error: {e}")
         return "Erro ao alterar os dados", 400
 
-@app.route("/produto/<int:id>", methods=["DELETE"])
+@app.route("/produtos/<int:id>", methods=["DELETE"])
 def delete_produto(id):
     try:
         # Definindo o objeto para manipular o registro pelo ID
@@ -149,7 +153,7 @@ def get_pedidos():
         return "Erro ao listar pedidos.", 500
 
 # Rotas para Create, Update e Delete de pedidos)
-@app.route("/pedido", methods=["POST"])
+@app.route("/pedidos", methods=["POST"])
 def set_pedido():
     try:
         dados = request.get_json()
@@ -170,7 +174,7 @@ def set_pedido():
         print(f"Erro: {e}")
         return "Erro ao inserir pedido.", 400
 
-@app.route("/pedido/<pedido_id>", methods=['DELETE'])
+@app.route("/pedidos/<pedido_id>", methods=['DELETE'])
 def delete_pedido(pedido_id):
     try:
         if not ObjectId.is_valid(pedido_id):
@@ -186,7 +190,7 @@ def delete_pedido(pedido_id):
     except Exception as e:
         return f"Erro ao excluir pedido: {e}", 500
 
-@app.route("/pedido/<pedido_id>", methods=["PUT"])
+@app.route("/pedidos/<pedido_id>", methods=["PUT"])
 def update_pedido(pedido_id):
     try:
         if not ObjectId.is_valid(pedido_id):
